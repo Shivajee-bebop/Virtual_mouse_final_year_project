@@ -16,15 +16,17 @@ class voiceAssistantClass():
         search.send_keys(self.query)
         enter = self.driver.find_element(By.XPATH, '//*[@id="search-form"]/fieldset/button/i')
         enter.click()
-        input("Press enter to exit")
+        n = int(input("Press 0 to exit"))
+
         self.driver.quit()
+
 
     def video(self,query):
 
         self.query = query
         self.driver.get("https://www.youtube.com/results?search_query="+query)
-        search = self.driver.find_element(By.XPATH, '//*[@id="video-title"]')
-        search.click()
+        # search = self.driver.find_element(By.XPATH, '//*[@id="video-title"]')
+        # search.click()
         input("Press enter to exit")
         self.driver.quit()
 

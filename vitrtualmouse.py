@@ -5,11 +5,12 @@ import time
 import HandTrackingModule as htm
 import pyautogui as pyg
 import math
-# from comtypes import CLSCTX_ALL
-# from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+from comtypes import CLSCTX_ALL
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+import screen_brightness_control as sbc
 
 #######
-wCam, hCam = 768, 432  # webcam width and height
+wCam, hCam = 640, 480  # webcam width and height
 pTime = 0  # previous time
 cTime = 0  # current time
 frameR = 100  # frame reduction value
@@ -27,16 +28,16 @@ cap = cv2.VideoCapture(0)
 cap.set(3, wCam)  # setting camera width
 cap.set(4, hCam)  # setting camera height
 
-# devices = AudioUtilities.GetSpeakers()
-# interface = devices.Activate(
-#     IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
-# volume = interface.QueryInterface(IAudioEndpointVolume)
-# #volume.GetMute()
-# #volume.GetMasterVolumeLevel()
-# volRange = volume.GetVolumeRange()
-# #print(volRange)
-#
-# volMin, volMax = volRange[0], volRange[1]
+devices = AudioUtilities.GetSpeakers()
+interface = devices.Activate(
+    IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+volume = interface.QueryInterface(IAudioEndpointVolume)
+#volume.GetMute()
+#volume.GetMasterVolumeLevel()
+volRange = volume.GetVolumeRange()
+#print(volRange)
+
+volMin, volMax = volRange[0], volRange[1]
 
 while True:
     success, img = cap.read()
@@ -81,8 +82,53 @@ while True:
             plocX, plocY = clocX, clocY  # set current x,y coordinates as previous
 
         if fingerUpList[1] == 1 and fingerUpList[2] == 1:  # if both index and middle finger are up and thumb down the Clicking mode
-            cv2.circle(img, (x1, y1), 15, (255, 0, 0), cv2.FILLED)  # change circle color to indicate click
+            cv2.circle(img, (x1, y1), 15, (255,0,0), cv2.FILLED)  # change circle color to indicate click
             pyg.click()  # click mouse
+
+        if fingerUpList[1] == 1 and x1 < 100 and fingerUpList[2] == 0:  # volume control
+
+            cv2.circle(img, (100, 100), 20, (0, 255, 0), cv2.FILLED)
+            #lineLen = detector.findDistance(img, 8, 4)
+            cv2.circle(img, (x1, y1), 15, (255, 255, 0), cv2.FILLED)
+            cv2.circle(img, (x4, y4), 15, (255, 255, 0), cv2.FILLED)
+            cv2.circle(img, (x4mid, y4mid), 15, (255, 255, 0), cv2.FILLED)
+            cv2.line(img, [x1, y1], [x4, y4], (255, 0, 0), 3)  # draw line between index and thumb
+            length = math.hypot(x4 - x1, y4 - y1)
+            #print(lineLen)
+            if length < 50:
+                cv2.circle(img, (x4mid, y4mid), 15, (255, 0, 255), cv2.FILLED)
+            vol = np.interp(length, [50, 180], [volMin, volMax])
+            volBar = np.interp(length, [50, 180], [400, 150])
+            volPer = np.interp(length, [50, 180], [0, 100])
+            #print(int(length), vol)
+            volume.SetMasterVolumeLevel(int(vol), None)
+            cv2.rectangle(img, (50, 150), (85, 400), (255, 0, 0), 3)
+            cv2.rectangle(img, (50, int(volBar)), (85, 400), (255, 0, 0), cv2.FILLED)
+            cv2.putText(img, f'{int(volPer)} %', (40, 450), cv2.FONT_HERSHEY_COMPLEX,
+                        1, (255, 0, 0), 3)
+
+        if fingerUpList[2] == 1 and x1 < 100 and fingerUpList[1] == 0:  # brightness control
+
+            cv2.circle(img, (100, 100), 20, (0,255, 0), cv2.FILLED)
+            #lineLen = detector.findDistance(img, 8, 4)
+            cv2.circle(img, (x2, y2), 15, (255, 255, 0), cv2.FILLED)
+            cv2.circle(img, (x4, y4), 15, (255, 255, 0), cv2.FILLED)
+            cv2.circle(img, (x4mid, y4mid), 15, (255, 255, 0), cv2.FILLED)
+            cv2.line(img, [x2, y2], [x4, y4], (255, 0, 0), 3)  # draw line between index and thumb
+            lineLen = math.hypot(x4 - x1, y4 - y1)
+            #print(lineLen)
+            if lineLen < 50:
+                cv2.circle(img, (x4mid, y4mid), 15, (255, 0, 255), cv2.FILLED)
+            b_level = np.interp(lineLen, [50, 150], [0, 100])
+            sbc.set_brightness(int(b_level))
+
+        if fingerUpList[1] == 1 and y1 < 100:  # mouse scroll
+
+            cv2.circle(img, (540, 100), 20, (0, 255, 0), cv2.FILLED)
+            pyg.scroll(-3000)
+
+
+
 
     # CALCULATING FRAME RATE AND DISPLAY IT ON SCREEN
 
@@ -90,6 +136,8 @@ while True:
     fps = 1 / (cTime - pTime)
     pTime = cTime
     cv2.putText(img, str(int(fps)), (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 255, 0), 2, cv2.LINE_AA)
+    cv2.circle(img, (100, 100), 2, (255,0,0), 2)
+    cv2.circle(img, (540, 100), 2, (255, 0, 0), 2)
     ##IMAGE DISPLAY
     cv2.imshow("Image", img)
     if cv2.waitKey(1) & 0xff == ord('q'):

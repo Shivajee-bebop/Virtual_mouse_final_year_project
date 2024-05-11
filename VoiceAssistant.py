@@ -14,6 +14,7 @@ engine.setProperty('rate',180)  # set rate of speech
 voices = engine.getProperty('voices')
 engine.setProperty('voice',voices[1].id)  # 0 for male voice. 1 for female voice
 
+
 def speak(text):
     engine.say(text)
     engine.runAndWait()  # waits till the speech is finished
@@ -26,8 +27,21 @@ arr = assist.weather()
 text = "Hi. I am your personal voice assistant megatron."
 speak(text)
 speak("Today is " + date_time.strftime("%d") + " of" + date_time.strftime("%b"))
-speak("The temperature is " + arr[0] + "and it is " + arr[1] + "in Trivandrum")
+speak("The temperature is " + arr[0] + " degree celsius and it is " + arr[1] + "in Trivandrum")
 speak("How do you do sir")
+
+
+def convert_speech_to_text(audio1):
+    try:
+        text1 = recog.recognize_google(audio1)
+    except sr.UnknownValueError:
+        text1 = " "
+        print("Sorry, I didnt understand that.")
+    except sr.RequestError as e:
+        print("Error;{0}".format(e))
+    return text1
+
+
 
 
 with sr.Microphone() as source:
@@ -35,7 +49,7 @@ with sr.Microphone() as source:
     recog.adjust_for_ambient_noise(source, 1.2)
     print("Listening...")
     audio = recog.listen(source)
-    text = recog.recognize_google(audio)  # sends audio to google api
+    text = convert_speech_to_text(audio)  # sends audio to google api
     #text = recog.recognize_sphinx(audio)
     print(text)
     if "what" and "about" and "you" in text:
@@ -48,7 +62,7 @@ with sr.Microphone() as source:
     recog.adjust_for_ambient_noise(source)
     print("Listening...")
     audio = recog.listen(source)
-    text2 = recog.recognize_google(audio)
+    text2 = convert_speech_to_text(audio)
     print(text2)
 
 if "wikipedia" and "information" in text2:
@@ -59,7 +73,7 @@ if "wikipedia" and "information" in text2:
         recog.adjust_for_ambient_noise(source)
         print("Listening...")
         audio = recog.listen(source)
-        text2 = recog.recognize_google(audio)
+        text2 = convert_speech_to_text(audio)
         print(text2)
         print("Certainly sir!Here is the information you requested")
         speak("Certainly sir!Here is the information you requested")
@@ -72,7 +86,7 @@ elif "play" and "video" in text2:
         recog.adjust_for_ambient_noise(source)
         print("Listening...")
         audio = recog.listen(source)
-        text2 = recog.recognize_google(audio)
+        text2 = convert_speech_to_text(audio)
         print(text2)
         print("Certainly sir!Here is the video you requested")
         speak("Certainly sir!Here is the video you requested")
@@ -102,12 +116,12 @@ elif "joke" or "jokes" in text2:
     speak(arr[0])
     print(arr[1])
     speak(arr[1])
-elif "weather" and "today" in text2:
-    arr = assist.weather()
-    print("Certainly sir!Here is the current weather conditions in Trivandrum")
-    speak("Certainly sir!Here is the current weather conditions in Trivandrum")
-    print(arr)
-    speak(arr)
+# elif "weather" and "today" in text2:
+#     arr = assist.weather()
+#     print("Certainly sir!Here is the current weather conditions in Trivandrum")
+#     speak("Certainly sir!Here is the current weather conditions in Trivandrum")
+#     print(arr)
+#     speak(arr)
 
 
 
